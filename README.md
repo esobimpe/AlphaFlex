@@ -148,29 +148,15 @@ AlphaFlex is more than an ETF—it's a comprehensive investment solution designe
 Install AlphaFlex Growth Portfolio to have full access to AlphaFlex toolkit, including scripts for backtesting, optimization, and analysis.
 
 ```bash
-!pip install git+https://github.com/esobimpe/AlphaFlex-Growth-Portfolio.git
+!pip install git+https://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@github.com/esobimpe/AlphaFlex-Growth-Portfolio.git
 
-from alpha_flex import get_portfolio, __version__, backtest_portfolio
+from alpha_flex import get_portfolio, backtest_portfolio
 
 # Get portfolio data
-portfolio_df = get_portfolio() #get portfolio details
+portfolio_df = get_portfolio() 
 portfolio_df
 
-
-#Get version
-__version__
-
-#Sample Output
-1.3.0
-
-#Get Portfolio Performance over different periods
+#Get Portfolio Performance over different periods - 1d, 5d, 1mo, 3mo, 6mo, 1y, 2y, 5y
 result = backtest_portfolio(investment_amount, period='6mo')
-
-#Sample Output
-#Fetching Portfolio data.
-{ 'Period': '6mo',
- 'Initial Investment': 1000000,
- 'Investment Value After': 2227605.271347491,
- 'Percentage Return': 122.7605271347491,
- 'Volatility': 11.449909401845341 }
+result
 
