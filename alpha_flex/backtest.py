@@ -18,10 +18,6 @@ def backtest_portfolio(initial_investment, period='1y', csv_file='portfolio_data
         stock_weights = get_portfolio()  # Assuming this fetches the portfolio stock data
         stock_weights.to_csv(csv_file, index=False)  # Cache to CSV
 
-    # Print stock weights to verify the fetched data
-    print("Stock Weights Data:")
-    print(stock_weights)
-
     # Prepare the periods and initialize value_data dictionary
     value_data = {'Ticker': stock_weights['Stock'], 'Name': stock_weights['Name'], 'Sector': stock_weights['Sector'],
                   'Market Cap': stock_weights['Market Cap'], 'Revenue': stock_weights['Revenue'], 
