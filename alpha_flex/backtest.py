@@ -3,9 +3,9 @@ import yfinance as yf
 import numpy as np
 import pandas as pd
 from datetime import datetime
-from .portfolio import get_portfolio  # Assuming get_portfolio() is from the same directory
+from .portfolio import get_portfolio  # Assuming get_portfolio() is imported
 
-def backtest_portfolio(investment_amount, period='1y', risk_free_rate=0, csv_file='portfolio_data.csv'):
+def backtest_portfolio(initial_investment, period='1y', risk_free_rate=0, csv_file='portfolio_data.csv'):
     """
     Perform backtest for the given portfolio with the specified investment amount and period.
     """
@@ -22,87 +22,58 @@ def backtest_portfolio(investment_amount, period='1y', risk_free_rate=0, csv_fil
     print("Stock Weights Data:")
     print(stock_weights)
 
-    # Extract the portfolio stock tickers and weights
-    tickers = stock_weights['Stock']
-    weights = stock_weights['Stock Allocation Weight (%)'] / 100  # Convert percentage to decimal for weights
+    # Prepare the periods and initialize value_data dictionary
+    periods = {"1d": "1d", "5d": "5d", "1mo": "1mo", "3mo": "3mo", "6mo": "6mo", "1y": "1y", "2y": "2y", "5y": "5y"}
+    value_data = {'Ticker': stock_weights['Stock'], 'Name': stock_weights['Name'], 'Sector': stock_weights['Sector'],
+                  'Market Cap': stock_weights['Market Cap'], 'Revenue': stock_weights['Revenue'], 
+                  'Volatility': stock_weights['Volatility'], 'Weights': stock_weights['Stock Allocation Weight (%)']}
 
-    # Fetch stock price data for the selected period
+    # Loop through the periods and fetch stock data
     stock_prices = {}
-    for ticker in tickers:
+    for stock in stock_weights['Stock']:
         try:
-            stock_data = yf.Ticker(ticker).history(period=period)['Close']
-            if stock_data.empty:
-                print(f"No data for {ticker} during the period {period}. Skipping this stock.")
-            else:
-                stock_prices[ticker] = stock_data
+            stock_data = yf.Ticker(stock).history(period=period)['Close']
+            stock_prices[stock] = stock_data
         except Exception as e:
-            print(f"Error fetching data for {ticker}: {e}")
-            stock_prices[ticker] = None
-    
-    # Print the fetched stock prices to debug
-    print("Stock Prices Data:")
-    print(stock_prices)
+            stock_prices[stock] = None
 
-    # Create a dataframe with the stock prices
+    # Convert stock prices to DataFrame
     price_df = pd.DataFrame(stock_prices).dropna(axis=1)
     
-    # Print the price dataframe to check the data
-    print("Price DataFrame (after dropping NaN columns):")
-    print(price_df)
-    
-    # Check if there is valid data in the price_df
     if price_df.empty:
-        raise ValueError("No valid stock price data available for the given period.")
-    
-    # Calculate portfolio value changes
-    price_change_ratios = price_df.iloc[-1] / price_df.iloc[0]
-    initial_stock_values = weights * investment_amount
-    final_stock_values = initial_stock_values * price_change_ratios
-    
-    # Print intermediate calculations
-    print("Initial Stock Values:")
-    print(initial_stock_values)
-    print("Price Change Ratios:")
-    print(price_change_ratios)
-    print("Final Stock Values:")
-    print(final_stock_values)
-    
-    portfolio_value_after = final_stock_values.sum()
+        value_data[f'{period} Value'] = [np.nan] * len(stock_weights)
+    else:
+        # Normalize the weights
+        stock_weights['Normalized Weight'] = stock_weights['Stock Allocation Weight (%)'] / stock_weights['Stock Allocation Weight (%)'].sum()
+        weights = stock_weights.set_index('Stock')['Normalized Weight']
+        weights = weights.reindex(price_df.columns).fillna(0)
+
+        # Calculate initial stock values and price change ratios
+        initial_stock_values = weights * initial_investment
+        price_change_ratios = price_df.iloc[-1] / price_df.iloc[0]
+        final_stock_values = initial_stock_values * price_change_ratios
+        value_data[f'{period} Value'] = final_stock_values.reindex(stock_weights['Stock']).fillna(0).values
+
+    value_data['Initial Value'] = (stock_weights['Stock Allocation Weight (%)'] / 100) * initial_investment
+    final_df = pd.DataFrame(value_data)
+
+    # Save the result to CSV for future use
+    final_df.to_csv('final_file.csv', index=False)
+
+    # Get the portfolio values for the specified period
+    value_after_period = final_df[f'{period} Value'].sum()
 
     # Calculate percentage return
-    percentage_return = (portfolio_value_after - investment_amount) / investment_amount * 100
+    percentage_return = (value_after_period - initial_investment) / initial_investment * 100
 
     # Calculate volatility (standard deviation of returns)
-    daily_returns = price_df.pct_change().dropna()
-    portfolio_daily_returns = (daily_returns * weights).sum(axis=1)
-    
-    # Print daily returns and portfolio returns
-    print("Daily Returns:")
-    print(daily_returns)
-    print("Portfolio Daily Returns:")
-    print(portfolio_daily_returns)
+    daily_returns = price_df.pct_change().dropna(axis=0)
+    portfolio_daily_returns = daily_returns.sum(axis=1)
 
     # Annualize volatility based on the number of trading days in a year (252 days)
     annualized_volatility = portfolio_daily_returns.std() * np.sqrt(252)  # Annualized volatility
-    
-    # Adjust volatility if a different period is specified
-    if period != '1y':
-        # Calculate the number of trading days for the given period
-        period_days = {
-            '1d': 1,
-            '5d': 5,
-            '1mo': 21,   # Roughly 21 trading days in a month
-            '3mo': 63,   # Roughly 63 trading days in 3 months
-            '6mo': 126,  # Roughly 126 trading days in 6 months
-            '1y': 252,   # 252 trading days in a year
-            '2y': 504,   # 504 trading days in 2 years
-            '5y': 1260   # 1260 trading days in 5 years
-        }
-        
-        annualized_volatility = portfolio_daily_returns.std() * np.sqrt(252 / period_days.get(period, 252))
 
     # Calculate Sharpe ratio (assuming a risk-free rate provided in percentage)
-    # Convert the risk-free rate from percentage to decimal
     risk_free_rate = risk_free_rate / 100  # If the user provides a percentage (e.g., 5), divide by 100
     
     # Ensure that the volatility is not zero to avoid division by zero in Sharpe ratio calculation
@@ -114,8 +85,8 @@ def backtest_portfolio(investment_amount, period='1y', risk_free_rate=0, csv_fil
     # Prepare the result dictionary
     result = {
         'Period': period,
-        'Investment Amount': investment_amount,
-        'Investment Value After': portfolio_value_after,
+        'Initial Investment': initial_investment,
+        'Investment Value After': value_after_period,
         'Percentage Return': percentage_return,
         'Volatility': annualized_volatility,
         'Sharpe Ratio': sharpe_ratio
