@@ -11,10 +11,10 @@ def backtest_portfolio(initial_investment, period='1y', csv_file='portfolio_data
     """
     # Check if the CSV file exists and if it's older than 24 hours
     if os.path.exists(csv_file) and (datetime.now() - datetime.fromtimestamp(os.path.getmtime(csv_file))).days < 1:
-        print("Using cached data from CSV.")
+        print("Fetching Portfolio data.")
         stock_weights = pd.read_csv(csv_file)
     else:
-        print("Fetching new portfolio data...")
+        print("Fetching updated portfolio data...")
         stock_weights = get_portfolio()  # Assuming this fetches the portfolio stock data
         stock_weights.to_csv(csv_file, index=False)  # Cache to CSV
 
