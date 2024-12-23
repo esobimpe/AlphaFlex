@@ -1,7 +1,7 @@
 Metadata-Version: 2.1
 Name: alpha_flex
-Version: 1.14.6
-Summary: A Python library for building growth-focused ETF portfolios.
+Version: 1.14.7
+Summary: A Python library for managing a growth-focused portfolio, including portfolio tracking, backtesting, performance analysis, and automated trading with brokerage integration.
 Home-page: https://github.com/esobimpe/alpha_flex
 Author: Eniola Sobimpe
 Author-email: sobimpeeniola@gmail.com
