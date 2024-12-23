@@ -156,9 +156,21 @@ from alpha_flex import get_portfolio, __version__, backtest_portfolio
 portfolio_df = get_portfolio() #get portfolio details
 portfolio_df
 
+
 #Get version
 __version__
 
+#Sample Output
+1.3.0
+
 #Get Portfolio Performance over different periods
-result = backtest_portfolio(investment_amount, period='1y')
+result = backtest_portfolio(investment_amount, period='6mo')
+
+#Sample Output
+#Fetching Portfolio data.
+{ 'Period': '6mo',
+ 'Initial Investment': 1000000,
+ 'Investment Value After': 2227605.271347491,
+ 'Percentage Return': 122.7605271347491,
+ 'Volatility': 11.449909401845341 }
 
