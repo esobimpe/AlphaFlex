@@ -150,10 +150,12 @@ Clone this repository to access the full AlphaFlex toolkit, including scripts fo
 ```bash
 !pip install git+https://github.com/esobimpe/AlphaFlex-Growth-Portfolio.git
 
-from alpha_flex import get_portfolio
+from alpha_flex import get_portfolio, __version__
 
 # Get portfolio data
-portfolio_df = get_portfolio()
+portfolio_df = get_portfolio() #get portfolio details
 portfolio_df
 
+#Get version
+print(__version__) #get version details
 
