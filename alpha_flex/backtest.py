@@ -1,5 +1,3 @@
-# your_library/backtest.py
-
 import os
 import yfinance as yf
 import numpy as np
@@ -7,13 +5,13 @@ import pandas as pd
 from datetime import datetime
 from .portfolio import get_portfolio  # Import get_portfolio() to fetch portfolio data
 
-def backtest_portfolio(investment_amount, period='1y', risk_free_rate=4.52, csv_file='./portfolio_data.csv'):
+def backtest_portfolio(investment_amount, period='1y', risk_free_rate=0, csv_file='portfolio_data.csv'):
     """
     Perform backtest for the given portfolio with the specified investment amount and period.
     """
     # Check if the CSV file exists and if it's older than 24 hours
     if os.path.exists(csv_file) and (datetime.now() - datetime.fromtimestamp(os.path.getmtime(csv_file))).days < 1:
-        print("Fetching portfolio data from database...")
+        print("Using cached data from CSV.")
         stock_weights = pd.read_csv(csv_file)
     else:
         print("Fetching new portfolio data...")
@@ -29,16 +27,21 @@ def backtest_portfolio(investment_amount, period='1y', risk_free_rate=4.52, csv_
     for ticker in tickers:
         try:
             stock_data = yf.Ticker(ticker).history(period=period)['Close']
-            stock_prices[ticker] = stock_data
+            if stock_data.empty:
+                print(f"No data for {ticker} during the period {period}. Skipping this stock.")
+            else:
+                stock_prices[ticker] = stock_data
         except Exception as e:
             print(f"Error fetching data for {ticker}: {e}")
             stock_prices[ticker] = None
     
     # Create a dataframe with the stock prices
     price_df = pd.DataFrame(stock_prices).dropna(axis=1)
+    
+    # Check if there is valid data in the price_df
     if price_df.empty:
         raise ValueError("No valid stock price data available for the given period.")
-
+    
     # Calculate portfolio value changes
     price_change_ratios = price_df.iloc[-1] / price_df.iloc[0]
     initial_stock_values = weights * investment_amount
@@ -75,7 +78,11 @@ def backtest_portfolio(investment_amount, period='1y', risk_free_rate=4.52, csv_
     # Convert the risk-free rate from percentage to decimal
     risk_free_rate = risk_free_rate / 100  # If the user provides a percentage (e.g., 5), divide by 100
     
-    sharpe_ratio = (portfolio_daily_returns.mean() - risk_free_rate) / annualized_volatility
+    # Ensure that the volatility is not zero to avoid division by zero in Sharpe ratio calculation
+    if annualized_volatility == 0:
+        sharpe_ratio = np.nan  # If volatility is zero, Sharpe ratio is undefined
+    else:
+        sharpe_ratio = (portfolio_daily_returns.mean() - risk_free_rate) / annualized_volatility
 
     # Prepare the result dictionary
     result = {
