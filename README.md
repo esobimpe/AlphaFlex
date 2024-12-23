@@ -160,5 +160,5 @@ portfolio_df
 __version__
 
 #Get Portfolio Performance over different periods
-result = backtest_portfolio(investment_amount, period='1y', risk_free_rate=4.52)
+result = backtest_portfolio(investment_amount, period='1y')
 

@@ -5,7 +5,7 @@ import pandas as pd
 from datetime import datetime
 from .portfolio import get_portfolio  # Assuming get_portfolio() is imported
 
-def backtest_portfolio(initial_investment, period='1y', risk_free_rate=0, csv_file='portfolio_data.csv'):
+def backtest_portfolio(initial_investment, period='1y', csv_file='portfolio_data.csv'):
     """
     Perform backtest for the given portfolio with the specified investment amount and period.
     """
@@ -23,7 +23,6 @@ def backtest_portfolio(initial_investment, period='1y', risk_free_rate=0, csv_fi
     print(stock_weights)
 
     # Prepare the periods and initialize value_data dictionary
-    periods = {"1d": "1d", "5d": "5d", "1mo": "1mo", "3mo": "3mo", "6mo": "6mo", "1y": "1y", "2y": "2y", "5y": "5y"}
     value_data = {'Ticker': stock_weights['Stock'], 'Name': stock_weights['Name'], 'Sector': stock_weights['Sector'],
                   'Market Cap': stock_weights['Market Cap'], 'Revenue': stock_weights['Revenue'], 
                   'Volatility': stock_weights['Volatility'], 'Weights': stock_weights['Stock Allocation Weight (%)']}
@@ -73,14 +72,6 @@ def backtest_portfolio(initial_investment, period='1y', risk_free_rate=0, csv_fi
     # Annualize volatility based on the number of trading days in a year (252 days)
     annualized_volatility = portfolio_daily_returns.std() * np.sqrt(252)  # Annualized volatility
 
-    # Calculate Sharpe ratio (assuming a risk-free rate provided in percentage)
-    risk_free_rate = risk_free_rate / 100  # If the user provides a percentage (e.g., 5), divide by 100
-    
-    # Ensure that the volatility is not zero to avoid division by zero in Sharpe ratio calculation
-    if annualized_volatility == 0:
-        sharpe_ratio = np.nan  # If volatility is zero, Sharpe ratio is undefined
-    else:
-        sharpe_ratio = (portfolio_daily_returns.mean() - risk_free_rate) / annualized_volatility
 
     # Prepare the result dictionary
     result = {
@@ -88,8 +79,7 @@ def backtest_portfolio(initial_investment, period='1y', risk_free_rate=0, csv_fi
         'Initial Investment': initial_investment,
         'Investment Value After': value_after_period,
         'Percentage Return': percentage_return,
-        'Volatility': annualized_volatility,
-        'Sharpe Ratio': sharpe_ratio
+        'Volatility': annualized_volatility
     }
 
     return result
