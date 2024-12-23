@@ -3,7 +3,7 @@ import yfinance as yf
 import numpy as np
 import pandas as pd
 from datetime import datetime
-from .portfolio import get_portfolio  # Import get_portfolio() to fetch portfolio data
+from .portfolio import get_portfolio  # Assuming get_portfolio() is from the same directory
 
 def backtest_portfolio(investment_amount, period='1y', risk_free_rate=0, csv_file='portfolio_data.csv'):
     """
@@ -17,6 +17,10 @@ def backtest_portfolio(investment_amount, period='1y', risk_free_rate=0, csv_fil
         print("Fetching new portfolio data...")
         stock_weights = get_portfolio()  # Assuming this fetches the portfolio stock data
         stock_weights.to_csv(csv_file, index=False)  # Cache to CSV
+
+    # Print stock weights to verify the fetched data
+    print("Stock Weights Data:")
+    print(stock_weights)
 
     # Extract the portfolio stock tickers and weights
     tickers = stock_weights['Stock']
@@ -35,8 +39,16 @@ def backtest_portfolio(investment_amount, period='1y', risk_free_rate=0, csv_fil
             print(f"Error fetching data for {ticker}: {e}")
             stock_prices[ticker] = None
     
+    # Print the fetched stock prices to debug
+    print("Stock Prices Data:")
+    print(stock_prices)
+
     # Create a dataframe with the stock prices
     price_df = pd.DataFrame(stock_prices).dropna(axis=1)
+    
+    # Print the price dataframe to check the data
+    print("Price DataFrame (after dropping NaN columns):")
+    print(price_df)
     
     # Check if there is valid data in the price_df
     if price_df.empty:
@@ -46,6 +58,15 @@ def backtest_portfolio(investment_amount, period='1y', risk_free_rate=0, csv_fil
     price_change_ratios = price_df.iloc[-1] / price_df.iloc[0]
     initial_stock_values = weights * investment_amount
     final_stock_values = initial_stock_values * price_change_ratios
+    
+    # Print intermediate calculations
+    print("Initial Stock Values:")
+    print(initial_stock_values)
+    print("Price Change Ratios:")
+    print(price_change_ratios)
+    print("Final Stock Values:")
+    print(final_stock_values)
+    
     portfolio_value_after = final_stock_values.sum()
 
     # Calculate percentage return
@@ -55,6 +76,12 @@ def backtest_portfolio(investment_amount, period='1y', risk_free_rate=0, csv_fil
     daily_returns = price_df.pct_change().dropna()
     portfolio_daily_returns = (daily_returns * weights).sum(axis=1)
     
+    # Print daily returns and portfolio returns
+    print("Daily Returns:")
+    print(daily_returns)
+    print("Portfolio Daily Returns:")
+    print(portfolio_daily_returns)
+
     # Annualize volatility based on the number of trading days in a year (252 days)
     annualized_volatility = portfolio_daily_returns.std() * np.sqrt(252)  # Annualized volatility
     
