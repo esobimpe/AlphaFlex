@@ -8,7 +8,7 @@ def read_readme():
 
 setup(
     name="alpha_flex",
-    version="1.14.4",
+    version="1.14.6",
     description="A Python library for building growth-focused ETF portfolios.",
     long_description=read_readme(),  # Use the README.md contents for PyPI
     long_description_content_type="text/markdown",  # Ensure it's recognized as markdown

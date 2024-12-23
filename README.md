@@ -12,6 +12,25 @@
 
 ---
 
+## 🛠️ **Installation & Usage**
+
+Install AlphaFlex Growth Portfolio to have full access to AlphaFlex toolkit, including scripts for backtesting, optimization, and analysis.
+
+```bash
+pip install alpha-flex
+
+from alpha_flex import get_portfolio, backtest_portfolio
+
+# Get portfolio data
+portfolio_df = get_portfolio() 
+portfolio_df
+
+#Get Portfolio Performance over different periods - 1d, 5d, 1mo, 3mo, 6mo, 1y, 2y, 5y
+result = backtest_portfolio(investment_amount, period='1y')
+result
+```
+
+
 ## 🎯 **Table of Contents**
 1. [Overview](#-overview)
 2. [Core Features](#-core-features)
@@ -20,8 +39,6 @@
 5. [Installation & Usage](#️-installation--usage)
 6. [Repository Structure](#-repository-structure)
 7. [Why Choose AlphaFlex?](#-why-choose-alphaflex)
-8. [Contact Us](#-contact-us)
-9. [License](#-license)
 
 ---
 
@@ -140,20 +157,5 @@ AlphaFlex offers an unparalleled investment opportunity by combining the best pr
 
 AlphaFlex is more than an ETF—it's a comprehensive investment solution designed for outperformance in a dynamic market environment.
 
-## 🛠️ **Installation & Usage**
 
-Install AlphaFlex Growth Portfolio to have full access to AlphaFlex toolkit, including scripts for backtesting, optimization, and analysis.
-
-```bash
-pip install alpha-flex
-
-from alpha_flex import get_portfolio, backtest_portfolio
-
-# Get portfolio data
-portfolio_df = get_portfolio() 
-portfolio_df
-
-#Get Portfolio Performance over different periods - 1d, 5d, 1mo, 3mo, 6mo, 1y, 2y, 5y
-result = backtest_portfolio(investment_amount, period='1y')
-result
 
