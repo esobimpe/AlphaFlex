@@ -1,3 +1,21 @@
+Metadata-Version: 2.1
+Name: alpha_flex
+Version: 1.14.4
+Summary: A Python library for building growth-focused ETF portfolios.
+Home-page: https://github.com/esobimpe/alpha_flex
+Author: Eniola Sobimpe
+Author-email: sobimpeeniola@gmail.com
+Classifier: Programming Language :: Python :: 3
+Classifier: License :: OSI Approved :: Apache Software License
+Classifier: Operating System :: OS Independent
+Requires-Python: >=3.7
+Description-Content-Type: text/markdown
+License-File: LICENSE
+Requires-Dist: yfinance
+Requires-Dist: numpy
+Requires-Dist: pandas
+Requires-Dist: finvizfinance
+
 # 🌟 **AlphaFlex Growth Portfolio (AFG)**  
 
 [![License: Apache 2.0](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://www.apache.org/licenses/LICENSE-2.0)
