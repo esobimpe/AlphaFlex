@@ -145,7 +145,7 @@ AlphaFlex is more than an ETF—it's a comprehensive investment solution designe
 
 ## 🛠️ **Installation & Usage**
 
-Clone this repository to access the full AlphaFlex toolkit, including scripts for backtesting, optimization, and analysis.
+Install AlphaFlex Growth Portfolio to have full access to AlphaFlex toolkit, including scripts for backtesting, optimization, and analysis.
 
 ```bash
 !pip install git+https://github.com/esobimpe/AlphaFlex-Growth-Portfolio.git
