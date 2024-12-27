@@ -14,11 +14,31 @@ def get_distinct_tickers():
     all_tickers = set()
     
     for category, filters in FILTERS.items():
-        foverview.set_filter(filters_dict=filters)
-        results = foverview.screener_view()
-        all_tickers.update(results['Ticker'].unique())
+        try:
+            # Apply filters
+            foverview.set_filter(filters_dict=filters)
+            
+            # Get results from screener_view
+            results = foverview.screener_view()
+            
+            # Check if results are None or missing 'Ticker'
+            if results is None:
+                print(f"No data returned for category '{category}' with filters: {filters}")
+                continue
+            
+            if 'Ticker' not in results:
+                print(f"Unexpected results format for category '{category}': {results}")
+                continue
+            
+            # Update the set with unique tickers
+            all_tickers.update(results['Ticker'].unique())
+        
+        except Exception as e:
+            print(f"An error occurred while processing category '{category}': {e}")
+            continue
     
     return list(all_tickers)
+
 
 def calculate_portfolio():
     stock_tickers = get_distinct_tickers()
