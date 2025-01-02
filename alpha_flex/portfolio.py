@@ -9,6 +9,7 @@ from .filters import FILTERS
 CSV_FILE_PATH = "./portfolio_data.csv"
 EXPIRATION_TIME = 86400  # 24 hours in seconds
 
+
 def get_distinct_tickers():
     foverview = Overview()
     all_tickers = set()
@@ -16,14 +17,16 @@ def get_distinct_tickers():
     for category, filters in FILTERS.items():
         try:
             # Apply filters
+            print(f"Applying filters for category '{category}': {filters}")
             foverview.set_filter(filters_dict=filters)
             
             # Get results from screener_view
             results = foverview.screener_view()
+            print(f"Results for category '{category}': {results}")
             
-            # Check if results are None or missing 'Ticker'
-            if results is None:
-                print(f"No data returned for category '{category}' with filters: {filters}")
+            # Check if results are valid
+            if results is None or not isinstance(results, pd.DataFrame):
+                print(f"No valid data returned for category '{category}' with filters: {filters}")
                 continue
             
             if 'Ticker' not in results:
@@ -42,6 +45,10 @@ def get_distinct_tickers():
 
 def calculate_portfolio():
     stock_tickers = get_distinct_tickers()
+    if not stock_tickers:
+        print("No tickers retrieved. Aborting portfolio calculation.")
+        return pd.DataFrame()  # Return an empty DataFrame if no tickers found
+    
     data = []
     for ticker in stock_tickers:
         try:
@@ -61,6 +68,10 @@ def calculate_portfolio():
             print(f"Error fetching data for {ticker}: {e}")
     
     df = pd.DataFrame(data)
+    if df.empty:
+        print("No data fetched for any tickers. Aborting portfolio calculation.")
+        return pd.DataFrame()
+    
     df = df[df['Country'].isin(['United States', 'Canada'])]
     total_market_cap = df['Market Cap'].sum()
     df['Market Cap Weight'] = df['Market Cap'] / total_market_cap
@@ -99,17 +110,19 @@ def get_portfolio():
         
         if current_time - file_mod_time < EXPIRATION_TIME:
             # If file is less than 24 hours old, load from CSV
-            print("Loading portfolio data.")
+            print("Loading portfolio data from cache.")
             return pd.read_csv(CSV_FILE_PATH)
         else:
             # If file is older than 24 hours, update the CSV
             print("Portfolio data is older than 24 hours. Fetching new data.")
             portfolio_data = calculate_portfolio()
-            portfolio_data.to_csv(CSV_FILE_PATH, index=False)
+            if not portfolio_data.empty:
+                portfolio_data.to_csv(CSV_FILE_PATH, index=False)
             return portfolio_data
     else:
         # If file doesn't exist, create it
-        print("Fetching data and creating a cashe for the next 24 hours.")
+        print("Fetching data and creating a cache for the next 24 hours.")
         portfolio_data = calculate_portfolio()
-        portfolio_data.to_csv(CSV_FILE_PATH, index=False)
+        if not portfolio_data.empty:
+            portfolio_data.to_csv(CSV_FILE_PATH, index=False)
         return portfolio_data
