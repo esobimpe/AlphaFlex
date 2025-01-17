@@ -40,15 +40,5 @@ FILTERS = {
         'Price': 'Over $15',
         '52-Week High/Low': '90% or more above Low',
         'RSI (14)': 'Not Oversold (>50)'
-    },
-    "CANSLIM": {
-        'EPS growthpast 5 years': 'Over 20%',
-        'Average Volume': 'Over 500K',
-        'EPS growthqtr over qtr': 'Over 20%',
-        'EPS growththis year': 'Over 20%',
-        'Sales growthpast 5 years': 'Over 20%',
-        'Sales growthqtr over qtr': 'Over 20%',
-        'Net Profit Margin': 'Over 10%',
-        'Current Volume': 'Over 1M'
     }
 }
