@@ -1,7 +1,7 @@
 FILTERS = {
     "High Growth": {
-        'Market Cap.': '+Large (over $10bln)',  # Adjusted to valid range
-        'EPS growthqtr over qtr': 'Over 40%',
+        'Market Cap.': '+Large (over $10bln)',  # Focus on large-cap companies
+        'EPS growthqtr over qtr': 'High (>25%)',  # Adjusted to valid option
         'EPS growthnext year': 'Over 30%',
         'EPS growththis year': 'Over 30%',
         'Sales growthqtr over qtr': 'Over 30%',
@@ -13,7 +13,7 @@ FILTERS = {
     },
     
     "High Sales Growth": {
-        'Market Cap.': '+Mid (over $2bln)',  # Corrected to valid option
+        'Market Cap.': '+Mid (over $2bln)',
         'Debt/Equity': 'Under 0.3',
         'Gross Margin': 'Over 60%',
         'Return on Equity': 'Over +25%',
@@ -22,11 +22,11 @@ FILTERS = {
         'Average Volume': 'Over 500K',
         'InstitutionalOwnership': 'Over 80%',
         'Price': 'Over $10',
-        'Short Float': 'Under 5%'
+        'Float Short': 'Under 5%'  # Corrected filter name
     },
     
     "Buy and Hold": {
-        'Market Cap.': '+Mid (over $2bln)',  # Corrected to valid option
+        'Market Cap.': '+Mid (over $2bln)',
         'Current Ratio': 'Over 2',
         'EPS growthnext 5 years': 'Over 15%',
         'PEG': 'Under 2',
@@ -36,7 +36,7 @@ FILTERS = {
     },
 
     "Bullish": {
-        'Market Cap.': '+Mid (over $2bln)',  # Corrected to valid option
+        'Market Cap.': '+Mid (over $2bln)',
         'EPS growthpast 5 years': 'Positive (>0%)',
         'EPS growthqtr over qtr': 'Over 20%',
         'EPS growththis year': 'Over 25%',
