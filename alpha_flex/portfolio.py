@@ -11,75 +11,93 @@ EXPIRATION_TIME = 86400  # 24 hours in seconds
 
 
 def get_distinct_tickers():
+    """Fetches unique stock tickers based on predefined filters."""
     foverview = Overview()
     all_tickers = set()
-    
+
     for category, filters in FILTERS.items():
         try:
-            # Apply filters
             print(f"Applying filters for category '{category}': {filters}")
             foverview.set_filter(filters_dict=filters)
-            
-            # Get results from screener_view
             results = foverview.screener_view()
-            print(f"Results for category '{category}': {results}")
-            
-            # Check if results are valid
-            if results is None or not isinstance(results, pd.DataFrame):
-                print(f"No valid data returned for category '{category}' with filters: {filters}")
+
+            if results is None or not isinstance(results, pd.DataFrame) or 'Ticker' not in results:
+                print(f"No valid data returned for category '{category}'")
                 continue
-            
-            if 'Ticker' not in results:
-                print(f"Unexpected results format for category '{category}': {results}")
-                continue
-            
-            # Update the set with unique tickers
+
             all_tickers.update(results['Ticker'].unique())
-        
+
         except Exception as e:
-            print(f"An error occurred while processing category '{category}': {e}")
-            continue
-    
+            print(f"Error processing category '{category}': {e}")
+
     return list(all_tickers)
 
 
+def fetch_stock_data(tickers):
+    """Fetches stock data in batches to prevent hitting Yahoo Finance rate limits."""
+    stock_data = []
+    max_retries = 3
+    retry_delay = 5  # seconds
+
+    # Batch fetch to reduce API calls
+    chunk_size = 10  
+    ticker_chunks = [tickers[i:i + chunk_size] for i in range(0, len(tickers), chunk_size)]
+
+    for chunk in ticker_chunks:
+        for attempt in range(max_retries):
+            try:
+                stocks = yf.Tickers(" ".join(chunk))
+                for ticker in chunk:
+                    stock = stocks.tickers.get(ticker)
+                    if not stock:
+                        continue
+                    info = stock.info
+                    hist = stock.history(period="1y")
+
+                    stock_data.append({
+                        'Stock': ticker,
+                        'Name': info.get('shortName', 'N/A'),
+                        'Country': info.get('country', 'N/A'),
+                        'Sector': info.get('sector', 'N/A'),
+                        'Market Cap': info.get('marketCap', 0),
+                        'Revenue': info.get('totalRevenue', 0),
+                        'Volatility': np.std(hist['Close']) if not hist.empty else 0
+                    })
+                break  # Exit retry loop if successful
+            except Exception as e:
+                print(f"Error fetching batch {chunk} (attempt {attempt + 1}/{max_retries}): {e}")
+                time.sleep(retry_delay)  # Wait before retrying
+
+    return stock_data
+
+
 def calculate_portfolio():
+    """Calculates stock allocation weights based on different factors."""
     stock_tickers = get_distinct_tickers()
     if not stock_tickers:
         print("No tickers retrieved. Aborting portfolio calculation.")
-        return pd.DataFrame()  # Return an empty DataFrame if no tickers found
-    
-    data = []
-    for ticker in stock_tickers:
-        try:
-            stock = yf.Ticker(ticker)
-            info = stock.info
-            hist = stock.history(period="1y")
-            data.append({
-                'Stock': ticker,
-                'Name': info.get('shortName', 'N/A'),
-                'Country': info.get('country', 'N/A'),
-                'Sector': info.get('sector', 'N/A'),
-                'Market Cap': info.get('marketCap', 0),
-                'Revenue': info.get('totalRevenue', 0),
-                'Volatility': np.std(hist['Close'])
-            })
-        except Exception as e:
-            print(f"Error fetching data for {ticker}: {e}")
-    
-    df = pd.DataFrame(data)
-    if df.empty:
+        return pd.DataFrame()
+
+    data = fetch_stock_data(stock_tickers)
+    if not data:
         print("No data fetched for any tickers. Aborting portfolio calculation.")
         return pd.DataFrame()
-    
+
+    df = pd.DataFrame(data)
     df = df[df['Country'].isin(['United States', 'Canada'])]
+
+    if df.empty:
+        print("No stocks from US/Canada found. Exiting.")
+        return pd.DataFrame()
+
+    # Calculate different weighting metrics
     total_market_cap = df['Market Cap'].sum()
     df['Market Cap Weight'] = df['Market Cap'] / total_market_cap
     num_stocks = len(stock_tickers)
     df['Equal Weight'] = 1 / num_stocks
     total_revenue = df['Revenue'].sum()
     df['Fundamental Weight'] = df['Revenue'] / total_revenue
-    df['Inverse Volatility'] = 1 / df['Volatility']
+    df['Inverse Volatility'] = 1 / df['Volatility'].replace(0, np.nan)
     total_inverse_vol = df['Inverse Volatility'].sum()
     df['Volatility Weight'] = df['Inverse Volatility'] / total_inverse_vol
     df['Log Market Cap'] = np.log(df['Market Cap'] + 1)
@@ -102,27 +120,20 @@ def calculate_portfolio():
 
 
 def get_portfolio():
-    # Check if the CSV file exists
+    """Fetches portfolio data, either from cache or by recalculating it."""
     if os.path.exists(CSV_FILE_PATH):
-        # Check the file modification time
         file_mod_time = os.path.getmtime(CSV_FILE_PATH)
         current_time = time.time()
-        
+
         if current_time - file_mod_time < EXPIRATION_TIME:
-            # If file is less than 24 hours old, load from CSV
             print("Loading portfolio data from cache.")
             return pd.read_csv(CSV_FILE_PATH)
-        else:
-            # If file is older than 24 hours, update the CSV
-            print("Portfolio data is older than 24 hours. Fetching new data.")
-            portfolio_data = calculate_portfolio()
-            if not portfolio_data.empty:
-                portfolio_data.to_csv(CSV_FILE_PATH, index=False)
-            return portfolio_data
-    else:
-        # If file doesn't exist, create it
-        print("Fetching data and creating a cache for the next 24 hours.")
-        portfolio_data = calculate_portfolio()
-        if not portfolio_data.empty:
-            portfolio_data.to_csv(CSV_FILE_PATH, index=False)
-        return portfolio_data
+
+        print("Portfolio data is older than 24 hours. Fetching new data.")
+    
+    # Fetch new data and save it
+    print("Fetching data and creating a cache for the next 24 hours.")
+    portfolio_data = calculate_portfolio()
+    if not portfolio_data.empty:
+        portfolio_data.to_csv(CSV_FILE_PATH, index=False)
+    return portfolio_data
