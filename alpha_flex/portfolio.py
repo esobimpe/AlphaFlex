@@ -33,64 +33,66 @@ def get_distinct_tickers():
     return list(all_tickers)
 
 
-def fetch_stock_data(tickers):
-    """Fetches stock data in batches to prevent hitting Yahoo Finance rate limits."""
-    stock_data = []
-    max_retries = 3
-    retry_delay = 5  # seconds
+API_KEY = "8QwKLb4XrUf2fPLAd58pCyHHOKuB3hTX"
+BASE_URL = "https://financialmodelingprep.com/api/v3"
 
-    # Batch fetch to reduce API calls
-    chunk_size = 10  
-    ticker_chunks = [tickers[i:i + chunk_size] for i in range(0, len(tickers), chunk_size)]
-
-    for chunk in ticker_chunks:
-        for attempt in range(max_retries):
-            try:
-                stocks = yf.Tickers(" ".join(chunk))
-                for ticker in chunk:
-                    stock = stocks.tickers.get(ticker)
-                    if not stock:
-                        continue
-                    info = stock.info
-                    hist = stock.history(period="1y")
-
-                    stock_data.append({
-                        'Stock': ticker,
-                        'Name': info.get('shortName', 'N/A'),
-                        'Country': info.get('country', 'N/A'),
-                        'Sector': info.get('sector', 'N/A'),
-                        'Market Cap': info.get('marketCap', 0),
-                        'Revenue': info.get('totalRevenue', 0),
-                        'Volatility': np.std(hist['Close']) if not hist.empty else 0
-                    })
-                break  # Exit retry loop if successful
-            except Exception as e:
-                print(f"Error fetching batch {chunk} (attempt {attempt + 1}/{max_retries}): {e}")
-                time.sleep(retry_delay)  # Wait before retrying
-
-    return stock_data
-
+def fetch_api_data(endpoint):
+    """Helper function to fetch data from the API"""
+    url = f"{BASE_URL}/{endpoint}&apikey={API_KEY}"
+    try:
+        response = requests.get(url)
+        response.raise_for_status()
+        return response.json()
+    except requests.exceptions.RequestException as e:
+        print(f"Error fetching data from API: {e}")
+        return None
 
 def calculate_portfolio():
-    """Calculates stock allocation weights based on different factors."""
     stock_tickers = get_distinct_tickers()
     if not stock_tickers:
         print("No tickers retrieved. Aborting portfolio calculation.")
         return pd.DataFrame()
-
-    data = fetch_stock_data(stock_tickers)
-    if not data:
+    
+    data = []
+    for ticker in stock_tickers:
+        try:
+            # Fetch stock price and volume
+            quote_data = fetch_api_data(f"quote-short/{ticker}?")
+            if not quote_data:
+                continue
+            price = quote_data[0].get("price", 0)
+            volume = quote_data[0].get("volume", 0)
+            
+            # Fetch market cap
+            market_cap_data = fetch_api_data(f"market-capitalization/{ticker}?")
+            market_cap = market_cap_data[0].get("marketCap", 0) if market_cap_data else 0
+            
+            # Fetch revenue
+            revenue_data = fetch_api_data(f"income-statement/{ticker}?period=quarter")
+            revenue = revenue_data[0].get("revenue", 0) if revenue_data else 0
+            
+            # Fetch historical price data for volatility
+            hist_data = fetch_api_data(f"historical-price-full/{ticker}?from=2024-01-01&to=2025-01-01")
+            if hist_data and "historical" in hist_data:
+                closes = [day["close"] for day in hist_data["historical"]]
+                volatility = np.std(closes) if closes else 0
+            else:
+                volatility = 0
+            
+            data.append({
+                'Stock': ticker,
+                'Market Cap': market_cap,
+                'Revenue': revenue,
+                'Volatility': volatility
+            })
+        except Exception as e:
+            print(f"Error fetching data for {ticker}: {e}")
+    
+    df = pd.DataFrame(data)
+    if df.empty:
         print("No data fetched for any tickers. Aborting portfolio calculation.")
         return pd.DataFrame()
-
-    df = pd.DataFrame(data)
-    df = df[df['Country'].isin(['United States', 'Canada'])]
-
-    if df.empty:
-        print("No stocks from US/Canada found. Exiting.")
-        return pd.DataFrame()
-
-    # Calculate different weighting metrics
+    
     total_market_cap = df['Market Cap'].sum()
     df['Market Cap Weight'] = df['Market Cap'] / total_market_cap
     num_stocks = len(stock_tickers)
@@ -115,9 +117,8 @@ def calculate_portfolio():
     total_adjusted_weight = df['Adjusted Weight'].sum()
     df['Stock Allocation Weight (%)'] = (df['Adjusted Weight'] / total_adjusted_weight) * 100
 
-    final_df = df[['Stock', 'Name', 'Country', 'Sector', 'Market Cap', 'Revenue', 'Volatility', 'Stock Allocation Weight (%)']]
+    final_df = df[['Stock', 'Market Cap', 'Revenue', 'Volatility', 'Stock Allocation Weight (%)']]
     return final_df.sort_values(by='Stock Allocation Weight (%)', ascending=False)
-
 
 def get_portfolio():
     """Fetches portfolio data, either from cache or by recalculating it."""
