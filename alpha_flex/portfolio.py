@@ -125,9 +125,9 @@ def calculate_portfolio():
     other_df = df[df['Category'] == 'OTHER']
 
     if not alpha_safe_df.empty:
-        alpha_safe_df['Final Weight'] = (alpha_safe_df['Log Market Cap Weight'] / alpha_safe_df['Log Market Cap Weight'].sum()) * 50
+        alpha_safe_df['Final Weight'] = (alpha_safe_df['Log Market Cap Weight'] / alpha_safe_df['Log Market Cap Weight'].sum()) * 20
     if not other_df.empty:
-        other_df['Final Weight'] = (other_df['Log Market Cap Weight'] / other_df['Log Market Cap Weight'].sum()) * 50
+        other_df['Final Weight'] = (other_df['Log Market Cap Weight'] / other_df['Log Market Cap Weight'].sum()) * 80
 
     df = pd.concat([alpha_safe_df, other_df])
     df['Stock Allocation Weight (%)'] = df['Final Weight']
