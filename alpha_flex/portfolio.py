@@ -7,8 +7,24 @@ import pandas as pd
 from finvizfinance.screener.overview import Overview
 from .filters import FILTERS
 
+
 CSV_FILE_PATH = "./portfolio_data.csv"
 EXPIRATION_TIME = 86400  # 24 hours in seconds
+
+API_KEY = "8QwKLb4XrUf2fPLAd58pCyHHOKuB3hTX"
+BASE_URL = "https://financialmodelingprep.com/api/v3"
+
+
+def fetch_api_data(endpoint):
+    """Helper function to fetch data from the API"""
+    url = f"{BASE_URL}/{endpoint}&apikey={API_KEY}"
+    try:
+        response = requests.get(url)
+        response.raise_for_status()
+        return response.json()
+    except requests.exceptions.RequestException as e:
+        print(f"Error fetching data from API: {e}")
+        return None
 
 def get_distinct_tickers():
     """Fetches unique stock tickers based on predefined filters."""
@@ -50,6 +66,7 @@ def get_distinct_tickers():
 
 def calculate_portfolio():
     alpha_safe_tickers, other_tickers = get_distinct_tickers()
+    print( alpha_safe_tickers)
     if not alpha_safe_tickers and not other_tickers:
         print("No tickers retrieved. Aborting portfolio calculation.")
         return pd.DataFrame()
