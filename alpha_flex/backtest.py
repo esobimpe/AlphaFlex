@@ -1,7 +1,7 @@
 import os
 import numpy as np
 import pandas as pd
-from datetime import datetime
+from datetime import datetime, timedelta
 import requests
 
 API_KEY = "8QwKLb4XrUf2fPLAd58pCyHHOKuB3hTX"
@@ -62,6 +62,10 @@ def backtest_portfolio(initial_investment, period='1y', csv_file='portfolio_data
                 start_date = (datetime.now() - pd.Timedelta(days=1095)).strftime('%Y-%m-%d')
             elif period == 'ytd':  # YTD calculation
                 start_date = f'{datetime.now().year}-01-01'
+            elif period == '1d':  # 1 Day calculation (yesterday to today)
+                # For 1-day period, get data from yesterday to today
+                yesterday = (datetime.now() - timedelta(days=1)).strftime('%Y-%m-%d')
+                start_date = yesterday
             else:
                 raise ValueError(f"Unsupported period: {period}")
 
