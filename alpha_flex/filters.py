@@ -60,7 +60,7 @@ FILTERS = {
         'Dividend Yield': 'Over 1%',  
         'P/E': 'Under 20',  
         'Return on Equity': 'Over +10%',  
-        'Institutional Ownership': 'Over 60%',  
+        'InstitutionalOwnership': 'Over 60%',  
         '200-Day Simple Moving Average': 'Price above SMA200',  
         'Country': 'USA'  
     }
