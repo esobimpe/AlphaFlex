@@ -1,109 +1,117 @@
 import os
-import requests
 import numpy as np
 import pandas as pd
 from datetime import datetime
-from .portfolio import get_portfolio  # Assuming get_portfolio() is imported
+import requests
 
-# API Details
 API_KEY = "8QwKLb4XrUf2fPLAd58pCyHHOKuB3hTX"
 BASE_URL = "https://financialmodelingprep.com/api/v3"
 
-def fetch_api_data(endpoint):
-    """Helper function to fetch data from the API"""
-    url = f"{BASE_URL}/{endpoint}&apikey={API_KEY}"
+def fetch_historical_data(ticker, start_date, end_date):
+    """
+    Fetch historical adjusted close data for a specific ticker between start_date and end_date.
+    """
+    url = f"{BASE_URL}/historical-price-full/{ticker}?from={start_date}&to={end_date}&apikey={API_KEY}"
     try:
         response = requests.get(url)
         response.raise_for_status()
-        return response.json()
+        data = response.json()
+        # Extract the adjusted close prices
+        historical_data = [
+            {'date': entry['date'], 'adjClose': entry['adjClose']}
+            for entry in data['historical']
+        ]
+        return pd.DataFrame(historical_data)
     except requests.exceptions.RequestException as e:
-        print(f"Error fetching data from API: {e}")
-        return None
-
-def fetch_historical_prices(ticker, from_date, to_date):
-    """Fetch historical closing prices for a stock within a date range"""
-    data = fetch_api_data(f"historical-price-full/{ticker}?from={from_date}&to={to_date}")
-    if data and "historical" in data:
-        return {day["date"]: day["close"] for day in data["historical"]}
-    return {}
+        print(f"Error fetching data for {ticker}: {e}")
+        return pd.DataFrame()
 
 def backtest_portfolio(initial_investment, period='1y', csv_file='portfolio_data.csv'):
     """
-    Perform backtesting for the given portfolio using API-based historical prices.
+    Perform backtest for the given portfolio with the specified investment amount and period.
     """
-    # Define date range for historical prices
-    end_date = datetime.today().strftime('%Y-%m-%d')
-    start_date = (datetime.today() - pd.DateOffset(years=1)).strftime('%Y-%m-%d') if period == '1y' else (datetime.today() - pd.DateOffset(months=6)).strftime('%Y-%m-%d')
-
-    # Fetch portfolio data from CSV (if recent) or update it
+    # Check if the CSV file exists and if it's older than 24 hours
     if os.path.exists(csv_file) and (datetime.now() - datetime.fromtimestamp(os.path.getmtime(csv_file))).days < 1:
-        print("Using cached portfolio data.")
+        print("Fetching Portfolio data.")
         stock_weights = pd.read_csv(csv_file)
     else:
         print("Fetching updated portfolio data...")
-        stock_weights = get_portfolio()
-        if stock_weights.empty:
-            print("Error: Portfolio data is empty. Exiting backtest.")
-            return None
-        stock_weights.to_csv(csv_file, index=False)  # Cache for reuse
+        stock_weights = get_portfolio()  # Assuming this fetches the portfolio stock data
+        stock_weights.to_csv(csv_file, index=False)  # Cache to CSV
 
-    # Store tickers and weights
-    tickers = stock_weights['Stock']
-    weights = stock_weights['Stock Allocation Weight (%)'] / 100  # Convert to decimal
+    # Prepare the periods and initialize value_data dictionary
+    value_data = {'Ticker': stock_weights['Stock'], 'Weights': stock_weights['Stock Allocation Weight (%)']}
 
-    # Fetch stock price data
+    # Loop through the periods and fetch stock data
     stock_prices = {}
-    for ticker in tickers:
-        historical_prices = fetch_historical_prices(ticker, start_date, end_date)
-        if historical_prices:
-            stock_prices[ticker] = historical_prices
+    for stock in stock_weights['Stock']:
+        try:
+            # Calculate start and end date for the given period
+            end_date = datetime.now().strftime('%Y-%m-%d')
+            if period == '1m':
+                start_date = (datetime.now() - pd.Timedelta(days=30)).strftime('%Y-%m-%d')
+            elif period == '3m':
+                start_date = (datetime.now() - pd.Timedelta(days=90)).strftime('%Y-%m-%d')
+            elif period == '6m':
+                start_date = (datetime.now() - pd.Timedelta(days=182)).strftime('%Y-%m-%d')
+            elif period == '1y':
+                start_date = (datetime.now() - pd.Timedelta(days=365)).strftime('%Y-%m-%d')
+            elif period == '2y':
+                start_date = (datetime.now() - pd.Timedelta(days=730)).strftime('%Y-%m-%d')
+            elif period == '3y':
+                start_date = (datetime.now() - pd.Timedelta(days=1095)).strftime('%Y-%m-%d')
+            elif period == 'ytd':  # YTD calculation
+                start_date = f'{datetime.now().year}-01-01'
+            else:
+                raise ValueError(f"Unsupported period: {period}")
 
-    # Ensure we have valid stock data
-    if not stock_prices:
-        print("No valid stock data retrieved. Exiting backtest.")
-        return None
+            # Fetch historical adjusted close prices using the new API function
+            stock_data = fetch_historical_data(stock, start_date, end_date)
+            
+            if not stock_data.empty:
+                # Ensure the dates are sorted, so we can calculate the change correctly
+                stock_data = stock_data.sort_values(by='date')
+                stock_prices[stock] = stock_data.set_index('date')['adjClose']
+            else:
+                stock_prices[stock] = None
+        except Exception as e:
+            stock_prices[stock] = None
 
-    # Convert historical prices to DataFrame
-    price_df = pd.DataFrame(stock_prices).T  # Transpose for easier handling
-    price_df = price_df.dropna(axis=1)  # Remove columns with missing data
+    # Convert stock prices to DataFrame
+    price_df = pd.DataFrame(stock_prices)
 
-    # Ensure there is enough data to proceed
-    if price_df.empty or len(price_df.columns) < 2:
-        print("Not enough valid historical data for backtesting. Exiting.")
-        return None
+    if price_df.empty:
+        value_data[f'{period} Value'] = [np.nan] * len(stock_weights)
+    else:
+        # Normalize the weights
+        stock_weights['Normalized Weight'] = stock_weights['Stock Allocation Weight (%)'] / stock_weights['Stock Allocation Weight (%)'].sum()
+        weights = stock_weights.set_index('Stock')['Normalized Weight']
+        weights = weights.reindex(price_df.columns).fillna(0)
 
-    # Adjust weights for available stocks
-    valid_tickers = price_df.index
-    adjusted_weights = weights.reindex(valid_tickers).fillna(0)
-    adjusted_weights /= adjusted_weights.sum()  # Re-normalize
+        # Calculate initial stock values and price change ratios
+        initial_stock_values = weights * initial_investment
+        # Calculate the price change ratios using adjusted close prices
+        price_change_ratios = price_df.iloc[-1] / price_df.iloc[0]  # Last / First
+        final_stock_values = initial_stock_values * price_change_ratios
+        value_data[f'{period} Value'] = final_stock_values.reindex(stock_weights['Stock']).fillna(0).values
 
-    # Get initial and final prices
-    initial_prices = price_df.iloc[:, 0]  # First available date
-    final_prices = price_df.iloc[:, -1]  # Last available date
+    value_data['Initial Value'] = (stock_weights['Stock Allocation Weight (%)'] / 100) * initial_investment
+    final_df = pd.DataFrame(value_data)
 
-    # Compute portfolio performance
-    initial_values = adjusted_weights * initial_investment
-    price_change_ratios = final_prices / initial_prices
-    final_values = initial_values * price_change_ratios
-    total_value_after_period = final_values.sum()
-
-    # Compute percentage return
-    percentage_return = ((total_value_after_period - initial_investment) / initial_investment) * 100
-
-    # Create final result dataframe
-    final_df = pd.DataFrame({
-        'Ticker': valid_tickers,
-        'Initial Value': initial_values.values,
-        'Final Value': final_values.values,
-        'Percentage Change': (price_change_ratios - 1).values * 100
-    })
+    # Save the result to CSV for future use
     final_df.to_csv('final_file.csv', index=False)
 
-    # Prepare final results
+    # Get the portfolio values for the specified period
+    value_after_period = final_df[f'{period} Value'].sum()
+
+    # Calculate percentage return
+    percentage_return = (value_after_period - initial_investment) / initial_investment * 100
+
+    # Prepare the result dictionary
     result = {
         'Period': period,
         'Initial Investment': initial_investment,
-        'Investment Value After': total_value_after_period,
+        'Investment Value After': value_after_period,
         'Percentage Return': percentage_return
     }
 
