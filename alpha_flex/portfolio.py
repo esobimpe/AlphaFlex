@@ -7,6 +7,9 @@ import pandas as pd
 from finvizfinance.screener.overview import Overview
 from .filters import FILTERS
 
+CSV_FILE_PATH = "./portfolio_data.csv"
+EXPIRATION_TIME = 86400  # 24 hours in seconds
+
 def get_distinct_tickers():
     """Fetches unique stock tickers based on predefined filters."""
     foverview = Overview()
