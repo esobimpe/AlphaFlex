@@ -34,7 +34,7 @@ def get_distinct_tickers():
     
     for category, filters in FILTERS.items():
         try:
-            print(f"Applying filters for category '{category}': {filters}")
+            #print(f"Applying filters for category '{category}': {filters}")
             foverview.set_filter(filters_dict=filters)
             results = foverview.screener_view()
 
@@ -66,7 +66,7 @@ def get_distinct_tickers():
 
 def calculate_portfolio():
     alpha_safe_tickers, other_tickers = get_distinct_tickers()
-    print( alpha_safe_tickers)
+    #print( alpha_safe_tickers)
     if not alpha_safe_tickers and not other_tickers:
         print("No tickers retrieved. Aborting portfolio calculation.")
         return pd.DataFrame()
