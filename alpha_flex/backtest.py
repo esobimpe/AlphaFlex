@@ -19,9 +19,7 @@ def backtest_portfolio(initial_investment, period='1y', csv_file='portfolio_data
         stock_weights.to_csv(csv_file, index=False)  # Cache to CSV
 
     # Prepare the periods and initialize value_data dictionary
-    value_data = {'Ticker': stock_weights['Stock'], 'Name': stock_weights['Name'], 'Sector': stock_weights['Sector'],
-                  'Market Cap': stock_weights['Market Cap'], 'Revenue': stock_weights['Revenue'], 
-                  'Volatility': stock_weights['Volatility'], 'Weights': stock_weights['Stock Allocation Weight (%)']}
+    value_data = {'Ticker': stock_weights['Stock'], 'Weights': stock_weights['Stock Allocation Weight (%)']}
 
     # Loop through the periods and fetch stock data
     stock_prices = {}
@@ -60,13 +58,6 @@ def backtest_portfolio(initial_investment, period='1y', csv_file='portfolio_data
 
     # Calculate percentage return
     percentage_return = (value_after_period - initial_investment) / initial_investment * 100
-
-    # Calculate volatility (standard deviation of returns)
-    daily_returns = price_df.pct_change().dropna(axis=0)
-    portfolio_daily_returns = daily_returns.sum(axis=1)
-
-    # Annualize volatility based on the number of trading days in a year (252 days)
-    annualized_volatility = portfolio_daily_returns.std() * np.sqrt(252)  # Annualized volatility
 
 
     # Prepare the result dictionary
