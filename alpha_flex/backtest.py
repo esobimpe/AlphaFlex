@@ -7,66 +7,70 @@ from .portfolio import get_portfolio  # Assuming get_portfolio() is imported
 
 def backtest_portfolio(initial_investment, period='1y', csv_file='portfolio_data.csv'):
     """
-    Perform backtest for the given portfolio with the specified investment amount and period.
+    Perform backtesting for the given portfolio with the specified investment amount and period.
     """
-    # Check if the CSV file exists and if it's older than 24 hours
+    # Fetch portfolio data from CSV (if recent) or update it
     if os.path.exists(csv_file) and (datetime.now() - datetime.fromtimestamp(os.path.getmtime(csv_file))).days < 1:
-        print("Fetching Portfolio data.")
+        print("Using cached portfolio data.")
         stock_weights = pd.read_csv(csv_file)
     else:
         print("Fetching updated portfolio data...")
-        stock_weights = get_portfolio()  # Assuming this fetches the portfolio stock data
-        stock_weights.to_csv(csv_file, index=False)  # Cache to CSV
+        stock_weights = get_portfolio()
+        if stock_weights.empty:
+            print("Error: Portfolio data is empty. Exiting backtest.")
+            return None
+        stock_weights.to_csv(csv_file, index=False)  # Cache for reuse
 
-    # Prepare the periods and initialize value_data dictionary
-    value_data = {'Ticker': stock_weights['Stock'], 'Weights': stock_weights['Stock Allocation Weight (%)']}
+    # Store tickers and weights
+    tickers = stock_weights['Stock']
+    weights = stock_weights['Stock Allocation Weight (%)'] / 100  # Convert to decimal
 
-    # Loop through the periods and fetch stock data
+    # Fetch stock price data
     stock_prices = {}
-    for stock in stock_weights['Stock']:
+    for ticker in tickers:
         try:
-            stock_data = yf.Ticker(stock).history(period=period)['Close']
-            stock_prices[stock] = stock_data
+            stock_data = yf.Ticker(ticker).history(period=period)
+            if 'Close' in stock_data:
+                stock_prices[ticker] = stock_data['Close']
         except Exception as e:
-            stock_prices[stock] = None
+            print(f"Error fetching data for {ticker}: {e}")
 
-    # Convert stock prices to DataFrame
+    # Convert price data to DataFrame and clean NaN values
     price_df = pd.DataFrame(stock_prices).dropna(axis=1)
-    
+
     if price_df.empty:
-        value_data[f'{period} Value'] = [np.nan] * len(stock_weights)
-    else:
-        # Normalize the weights
-        stock_weights['Normalized Weight'] = stock_weights['Stock Allocation Weight (%)'] / stock_weights['Stock Allocation Weight (%)'].sum()
-        weights = stock_weights.set_index('Stock')['Normalized Weight']
-        weights = weights.reindex(price_df.columns).fillna(0)
+        print("No valid stock data retrieved. Exiting backtest.")
+        return None
 
-        # Calculate initial stock values and price change ratios
-        initial_stock_values = weights * initial_investment
-        price_change_ratios = price_df.iloc[-1] / price_df.iloc[0]
-        final_stock_values = initial_stock_values * price_change_ratios
-        value_data[f'{period} Value'] = final_stock_values.reindex(stock_weights['Stock']).fillna(0).values
+    # Adjust weights to only include stocks that have valid price data
+    valid_tickers = price_df.columns
+    adjusted_weights = weights.reindex(valid_tickers).fillna(0)
+    adjusted_weights /= adjusted_weights.sum()  # Re-normalize
 
-    value_data['Initial Value'] = (stock_weights['Stock Allocation Weight (%)'] / 100) * initial_investment
-    final_df = pd.DataFrame(value_data)
+    # Compute portfolio performance
+    initial_values = adjusted_weights * initial_investment
+    price_change_ratios = price_df.iloc[-1] / price_df.iloc[0]
+    final_values = initial_values * price_change_ratios
+    total_value_after_period = final_values.sum()
 
-    # Save the result to CSV for future use
+    # Compute percentage return
+    percentage_return = ((total_value_after_period - initial_investment) / initial_investment) * 100
+
+    # Create final result dataframe
+    final_df = pd.DataFrame({
+        'Ticker': valid_tickers,
+        'Initial Value': initial_values.reindex(valid_tickers).values,
+        'Final Value': final_values.values,
+        'Percentage Change': (price_change_ratios - 1).values * 100
+    })
     final_df.to_csv('final_file.csv', index=False)
 
-    # Get the portfolio values for the specified period
-    value_after_period = final_df[f'{period} Value'].sum()
-
-    # Calculate percentage return
-    percentage_return = (value_after_period - initial_investment) / initial_investment * 100
-
-
-    # Prepare the result dictionary
+    # Prepare final results
     result = {
         'Period': period,
         'Initial Investment': initial_investment,
-        'Investment Value After': value_after_period,
-        'Percentage Return': percentage_return,
-        'Volatility': annualized_volatility
+        'Investment Value After': total_value_after_period,
+        'Percentage Return': percentage_return
     }
 
     return result
