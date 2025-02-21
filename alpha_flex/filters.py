@@ -9,7 +9,8 @@ FILTERS = {
         'RSI (14)': 'Not Oversold (>50)',  # Focuses on stocks with bullish momentum and avoids oversold positions.
         '200-Day Simple Moving Average': 'Price above SMA200',  # Confirms that the stock is in a long-term upward trend.
         'Debt/Equity': 'Under 0.5',  # Limits companies with excessive leverage, ensuring financial health.
-        'Gross Margin': 'Over 40%'  # Indicates good profitability at a core business level.
+        'Gross Margin': 'Over 40%', # Indicates good profitability at a core business level.
+        'Country': 'USA'
     },
     
     "High Sales Growth": {
@@ -22,7 +23,8 @@ FILTERS = {
         'Average Volume': 'Over 500K',  # Ensures sufficient liquidity while allowing for smaller companies.
         'InstitutionalOwnership': 'Over 80%',  # Highlights confidence from large, professional investors.
         'Price': 'Over $10',  # Avoids penny stocks, ensuring a certain level of market maturity.
-        'Float Short': 'Under 5%'  # Avoids heavily shorted stocks, reducing downside risk.
+        'Float Short': 'Under 5%',  # Avoids heavily shorted stocks, reducing downside risk.
+        'Country': 'USA'
     },
     
     "Buy and Hold": {
@@ -33,6 +35,7 @@ FILTERS = {
         'Return on Equity': 'Over +15%',  # Highlights companies with strong shareholder returns.
         'Beta': 'Under 1.5',  # Targets stocks with lower volatility relative to the market.
         '20-Day Simple Moving Average': 'Price above SMA20',  # Confirms a short-term bullish trend.
+        'Country': 'USA'
     },
 
     "Bullish": {
@@ -47,6 +50,7 @@ FILTERS = {
         'Price': 'Over $15',  # Avoids low-priced stocks, ensuring market quality.
         '52-Week High/Low': '90% or more above Low',  # Focuses on stocks near their 52-week high, indicating strong performance.
         'RSI (14)': 'Not Oversold (>50)',  # Avoids oversold stocks and targets those in bullish momentum.
-        '50-Day Simple Moving Average': 'Price above SMA50'  # Confirms recent upward price trends.
+        '50-Day Simple Moving Average': 'Price above SMA50',  # Confirms recent upward price trends.
+        'Country': 'USA'
     }
 }
