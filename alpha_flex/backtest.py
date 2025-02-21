@@ -52,6 +52,8 @@ def backtest_portfolio(initial_investment, period='1y', csv_file='portfolio_data
                 start_date = (datetime.now() - pd.Timedelta(days=30)).strftime('%Y-%m-%d')
             elif period == '3m':
                 start_date = (datetime.now() - pd.Timedelta(days=90)).strftime('%Y-%m-%d')
+            elif period == '5d':
+                start_date = (datetime.now() - pd.Timedelta(days=5)).strftime('%Y-%m-%d')
             elif period == '6m':
                 start_date = (datetime.now() - pd.Timedelta(days=182)).strftime('%Y-%m-%d')
             elif period == '1y':
