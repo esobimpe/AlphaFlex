@@ -14,19 +14,28 @@ EXPIRATION_TIME = 86400  # 24 hours in seconds
 def get_distinct_tickers():
     """Fetches unique stock tickers based on predefined filters."""
     foverview = Overview()
-    all_tickers = set()
 
+    all_tickers = set()
+  
     for category, filters in FILTERS.items():
         try:
             print(f"Applying filters for category '{category}': {filters}")
             foverview.set_filter(filters_dict=filters)
             results = foverview.screener_view()
 
+            print(results)
+
             if results is None or not isinstance(results, pd.DataFrame) or 'Ticker' not in results:
                 print(f"No valid data returned for category '{category}'")
                 continue
 
-            all_tickers.update(results['Ticker'].unique())
+            # Filter based on the 'USA' column if it exists
+            if 'USA' in results.columns:
+                results_usa = results[results['USA'] == True]  # Assuming True indicates USA
+                all_tickers.update(results_usa['Ticker'].unique())
+            else:
+                print(f"No 'USA' column found in the results for category '{category}'")
+                all_tickers.update(results['Ticker'].unique())
 
         except Exception as e:
             print(f"Error processing category '{category}': {e}")
