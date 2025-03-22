@@ -1,4 +1,4 @@
-# 🌟 **AlphaFlex Growth Portfolio (AFG)**  
+# 🌟 **AlphaFlex Portfolio**  
 
 [![License: Apache 2.0](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://www.apache.org/licenses/LICENSE-2.0)
 [![1Y Return: 200%](https://img.shields.io/badge/1Y%20Return-200%25-brightgreen.svg)](https://github.com/AlphaFlexETF/Performance)
