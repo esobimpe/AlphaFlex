@@ -4,7 +4,7 @@
 [![1Y Return: 200%](https://img.shields.io/badge/1Y%20Return-200%25-brightgreen.svg)](https://github.com/AlphaFlexETF/Performance)
 [![ETF Type: Growth](https://img.shields.io/badge/ETF%20Type-Growth-yellow.svg)](https://github.com/AlphaFlexETF/Details)
 
-**Link: https://c7e5-136-227-234-163.ngrok-free.app/**
+
 
 ---
 
