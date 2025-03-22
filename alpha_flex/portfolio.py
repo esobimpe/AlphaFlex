@@ -6,18 +6,16 @@ import numpy as np
 import pandas as pd
 from finvizfinance.screener.overview import Overview
 from .filters import FILTERS
+from .config import get_api_key, BASE_URL
 
 
 CSV_FILE_PATH = "./portfolio_data.csv"
 EXPIRATION_TIME = 86400  # 24 hours in seconds
 
-API_KEY = "8QwKLb4XrUf2fPLAd58pCyHHOKuB3hTX"
-BASE_URL = "https://financialmodelingprep.com/api/v3"
-
-
 def fetch_api_data(endpoint):
     """Helper function to fetch data from the API"""
-    url = f"{BASE_URL}/{endpoint}&apikey={API_KEY}"
+    api_key = get_api_key()
+    url = f"{BASE_URL}/{endpoint}&apikey={api_key}"
     try:
         response = requests.get(url)
         response.raise_for_status()

@@ -3,15 +3,14 @@ import numpy as np
 import pandas as pd
 from datetime import datetime, timedelta
 import requests
-
-API_KEY = "8QwKLb4XrUf2fPLAd58pCyHHOKuB3hTX"
-BASE_URL = "https://financialmodelingprep.com/api/v3"
+from .config import get_api_key, BASE_URL
 
 def fetch_historical_data(ticker, start_date, end_date):
     """
     Fetch historical adjusted close data for a specific ticker between start_date and end_date.
     """
-    url = f"{BASE_URL}/historical-price-full/{ticker}?from={start_date}&to={end_date}&apikey={API_KEY}"
+    api_key = get_api_key()
+    url = f"{BASE_URL}/historical-price-full/{ticker}?from={start_date}&to={end_date}&apikey={api_key}"
     try:
         response = requests.get(url)
         response.raise_for_status()
