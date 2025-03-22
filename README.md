@@ -5,7 +5,6 @@
 [![ETF Type: Growth](https://img.shields.io/badge/ETF%20Type-Growth-yellow.svg)](https://github.com/AlphaFlexETF/Details)
 
 
-
 ---
 
 > **Disclaimer**: This is a project aimed at exploring the concept of a portfolio that automatically adjusts itself every week in response to market movements, with the goal of reducing risk and increasing returns. The project leverages advanced quantitative models and strategies, but it is not intended as financial or investment advice. The performance of this portfolio is for educational and research purposes only, and any investments based on this project should be made with caution and after thorough research.
@@ -17,7 +16,7 @@
 Install AlphaFlex Growth Portfolio to have full access to AlphaFlex toolkit, including scripts for backtesting, optimization, and analysis.
 
 ```bash
-pip install alpha-flex
+!pip install git+https://github.com/esobimpe/AlphaFlex.git
 
 from alpha_flex import get_portfolio, backtest_portfolio
 
