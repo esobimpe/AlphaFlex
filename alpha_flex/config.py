@@ -5,7 +5,7 @@ from dotenv import load_dotenv
 # Load environment variables from .env file if exists
 load_dotenv()
 
-# Encoded API key (this is your API key encoded using base64)
+
 ENCODED_API_KEY = "OFF3S0xiNFhyVWYyZlBMQWQ1OHBDeUhIT0t1QjNoVFg="
 BASE_URL = "https://financialmodelingprep.com/api/v3"
 
