@@ -8,7 +8,7 @@ def read_readme():
 
 setup(
     name="alpha_flex",
-    version="4.5",
+    version="4.6",
     description="A Python library for managing a growth-focused portfolio, including portfolio tracking, backtesting, performance analysis, and automated trading with brokerage integration.",
     long_description=read_readme(),  # Use the README.md contents for PyPI
     long_description_content_type="text/markdown",  # Ensure it's recognized as markdown
@@ -20,7 +20,8 @@ setup(
         "yfinance",
         "numpy",
         "pandas",
-        "finvizfinance"
+        "finvizfinance", 
+        "python-dotenv"
     ],
     classifiers=[
         "Programming Language :: Python :: 3",
