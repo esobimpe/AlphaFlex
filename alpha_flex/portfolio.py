@@ -49,7 +49,7 @@ def get_distinct_tickers():
                     sector_data = fetch_api_data(f"profile/{ticker}?")
                     if sector_data:
                         sector = sector_data[0].get("sector", "")
-                        if sector in ["Consumer Cyclical", "Consumer Defensive", "Healthcare"]:
+                        if sector in ["Consumer Cyclical", "Consumer Defensive", "Healthcare", "Basic Materials"]:
                             valid_tickers.add(ticker)
                 
                 alpha_safe_tickers.update(valid_tickers)
@@ -123,9 +123,9 @@ def calculate_portfolio():
     other_df = df[df['Category'] == 'OTHER']
 
     if not alpha_safe_df.empty:
-        alpha_safe_df['Final Weight'] = (alpha_safe_df['Log Market Cap Weight'] / alpha_safe_df['Log Market Cap Weight'].sum()) * 20
+        alpha_safe_df['Final Weight'] = (alpha_safe_df['Log Market Cap Weight'] / alpha_safe_df['Log Market Cap Weight'].sum()) * 60
     if not other_df.empty:
-        other_df['Final Weight'] = (other_df['Log Market Cap Weight'] / other_df['Log Market Cap Weight'].sum()) * 80
+        other_df['Final Weight'] = (other_df['Log Market Cap Weight'] / other_df['Log Market Cap Weight'].sum()) * 40
 
     df = pd.concat([alpha_safe_df, other_df])
     df['Stock Allocation Weight (%)'] = df['Final Weight']
